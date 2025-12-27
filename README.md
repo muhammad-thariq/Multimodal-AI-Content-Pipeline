@@ -1,6 +1,8 @@
 <div align="center">
     <h1>HM-Tools-AutomatedShorts</h1>
-    <img width="2539" height="1526" alt="image" src="https://github.com/user-attachments/assets/af2f4763-aea4-4a01-ac77-d6f0d9b118d9" />
+
+https://github.com/user-attachments/assets/31bfbcb7-30d6-4e1b-a849-686c7b6bef26
+
 </div>
 
 <div align="center">
