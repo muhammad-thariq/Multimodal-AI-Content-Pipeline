@@ -1,15 +1,16 @@
 <div align="center">
     <h1>HM-Tools-AutomatedShorts</h1>
-<img width="2539" height="1526" alt="image" src="https://github.com/user-attachments/assets/af2f4763-aea4-4a01-ac77-d6f0d9b118d9" />
+    <img width="2539" height="1526" alt="image" src="https://github.com/user-attachments/assets/af2f4763-aea4-4a01-ac77-d6f0d9b118d9" />
+</div>
 
-![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
-![OpenCV](https://img.shields.io/badge/OpenCV-5C3EE8?style=flat&logo=opencv&logoColor=white)
-![NumPy](https://img.shields.io/badge/NumPy-013243?style=flat&logo=numpy&logoColor=white)
-![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=flat&logo=pytorch&logoColor=white)
-![Hugging Face](https://img.shields.io/badge/Transformers-454545?style=flat&logo=huggingface&logoColor=FFD21E)
-![Whisper](https://img.shields.io/badge/OpenAI%20Whisper-412991?style=flat&logo=openai&logoColor=white)
-![FFmpeg](https://img.shields.io/badge/FFmpeg-007808?style=flat&logo=ffmpeg&logoColor=white)
-
+<div align="center">
+<a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.10+-gray?style=flat&logo=python&logoColor=white&labelColor=3776AB" alt="Python"></a>
+<a href="https://opencv.org/"><img src="https://img.shields.io/badge/OpenCV-4.9+-gray?style=flat&logo=opencv&logoColor=white&labelColor=5C3EE8" alt="OpenCV"></a>
+<a href="https://numpy.org/"><img src="https://img.shields.io/badge/NumPy-1.24+-gray?style=flat&logo=numpy&logoColor=white&labelColor=013243" alt="NumPy"></a>
+<a href="https://pytorch.org/"><img src="https://img.shields.io/badge/PyTorch-2.3+-gray?style=flat&logo=pytorch&logoColor=white&labelColor=EE4C2C" alt="PyTorch"></a>
+<a href="https://huggingface.co/docs/transformers/index"><img src="https://img.shields.io/badge/Transformers-4.45+-gray?style=flat&logo=huggingface&logoColor=FFD21E&labelColor=454545" alt="Transformers"></a>
+<a href="https://github.com/openai/whisper"><img src="https://img.shields.io/badge/OpenAI%20Whisper-v20231117-gray?style=flat&logo=openai&logoColor=white&labelColor=412991" alt="OpenAI Whisper"></a>
+<a href="https://ffmpeg.org/"><img src="https://img.shields.io/badge/FFmpeg-6.0+-gray?style=flat&logo=ffmpeg&logoColor=white&labelColor=007808" alt="FFmpeg"></a>
 </div>
 
 ---
