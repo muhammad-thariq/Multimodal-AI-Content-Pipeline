@@ -175,8 +175,93 @@ def final_video_name_from_input_txt() -> str | None:
     return f"{safe}.mp4"
 
 
-def process_pipeline():
-    """Main pipeline processing function (runs in background thread)."""
+# -------------------------------------------------------
+# PIPELINE FUNCTIONS
+# -------------------------------------------------------
+def process_analyze_only():
+    """Run analysis step only (Step 1) for separate Analyze workflow."""
+    try:
+        emit_log("=" * 60)
+        emit_log("🔍 Starting Video Analysis")
+        emit_log(f"📂 Working DIR: {PCC_DIR}")
+        emit_log("=" * 60)
+
+        # Step 1: analyze_cat_video.py
+        step = PIPELINE_STEPS[0]
+        output_txt = PCC_DIR / "output.txt"
+        if output_txt.exists():
+            output_txt.unlink()
+            emit_log("🗑️ Removed existing output.txt")
+        
+        emit_step_status(step["id"], "running", step["description"])
+        emit_progress(step["progress_start"])
+        
+        ok, log = run_cmd(
+            [
+                VENV_PYTHON,
+                str(SCRIPTS_DIR / "analyze_cat_video.py"),
+                "--video",
+                UPLOAD_VIDEO_NAME,
+                "--out",
+                "output.txt",
+                "--fps",
+                "1.0",
+            ],
+            PCC_DIR,
+            step,
+        )
+        
+        if not ok:
+            emit_log("❌ Video analysis failed")
+            socketio.emit("processing_error", {"message": "Video analysis failed"})
+            return
+        
+        # Read and emit output.txt content
+        if output_txt.exists():
+            with open(output_txt, 'r', encoding='utf-8') as f:
+                analysis_content = f.read()
+            socketio.emit("analysis_output", {"content": analysis_content})
+            emit_log("✅ Analysis complete")
+        
+        emit_progress(100)
+        socketio.emit("analysis_complete", {"message": "Analysis completed"})
+        emit_log("=" * 60)
+
+    except Exception as e:
+        emit_log(f"❌ Error: {str(e)}")
+        socketio.emit("processing_error", {"message": str(e)})
+
+
+def process_pipeline_without_analysis():
+    """Process pipeline Steps 2-6 only (skip analysis)."""
+    try:
+        emit_log("=" * 60)
+        emit_log("🚀 Starting Video Processing (Steps 2-6)")
+        emit_log(f"🐍 Using Python: {VENV_PYTHON}")
+        emit_log(f"📁 Scripts PATH: {VENV_SCRIPTS}")
+        emit_log(f"📂 Scripts DIR: {SCRIPTS_DIR}")
+        emit_log(f"📂 Working DIR: {PCC_DIR}")
+        emit_log("=" * 60)
+
+        # Initialize steps 2-6 as queued
+        for step in PIPELINE_STEPS[1:]:  # Skip step 1
+            emit_step_status(step["id"], "queued", step["description"])
+        
+        emit_progress(0)
+
+        # Step 2: kokoro_heart.py
+        step = PIPELINE_STEPS[1]
+        process_step_2_onwards()
+        
+    except Exception as e:
+        emit_log(f"❌ Unexpected error: {str(e)}")
+        socketio.emit("processing_error", {"message": str(e)})
+
+
+def process_step_2_onwards():
+    """Helper to run steps 2-6 - extracted for reuse."""
+    # Step 2: kokoro_heart.py
+    step = PIPELINE_STEPS[1]
     try:
         emit_log("=" * 60)
         emit_log("🚀 Starting Video Processing Pipeline")

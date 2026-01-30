@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Processing Pipeline - AI Shorts Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="title">
+                    <span class="gradient-text">AI Shorts Generator</span>
+                </h1>
+                <p class="subtitle">Transform your videos into engaging 9:16 shorts with AI narration</p>
+            </div>
+        </header>
+
+        <!-- Upload Section -->
+        <section class="card upload-section">
+            <h2 class="section-title">📹 Upload Video</h2>
+            <div class="upload-zone" id="uploadZone">
+                <input type="file" id="videoInput" accept="video/*" hidden>
+                <div class="upload-icon">🎬</div>
+                <p class="upload-text">Drag & drop your video here</p>
+                <p class="upload-subtext">or click to browse</p>
+                <div id="filePreview" class="file-preview hidden"></div>
+            </div>
+        </section>
+
+        <!-- Script Description Section -->
+        <section class="card script-section">
+            <h2 class="section-title">✍️ Script Description</h2>
+            <p class="section-description">Enter the narration script for your video</p>
+            <textarea 
+                id="scriptInput" 
+                class="script-textarea" 
+                placeholder="Enter your video script here... (e.g., 'This cat is a master of finding fresh water')"
+                rows="6"
+            ></textarea>
+            <div class="char-counter">
+                <span id="charCount">0</span> characters
+            </div>
+        </section>
+
+        <!-- Start Button -->
+        <div class="action-section">
+            <button id="startBtn" class="btn-primary">
+                <span class="btn-icon">🚀</span>
+                <span class="btn-text">Start Processing</span>
+            </button>
+        </div>
+
+        <!-- Progress Section -->
+        <section class="card progress-section hidden" id="progressSection">
+            <h2 class="section-title">⚙️ Processing Status</h2>
+            
+            <!-- Overall Progress -->
+            <div class="progress-container">
+                <div class="progress-header">
+                    <span class="progress-label">Overall Progress</span>
+                    <span class="progress-percentage" id="progressPercentage">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <p class="progress-message" id="progressMessage">Initializing...</p>
+            </div>
+
+            <!-- Pipeline Steps -->
+            <div class="steps-container">
+                <h3 class="steps-title">Pipeline Steps</h3>
+                <div class="steps-grid">
+                    <div class="step-item" data-step="1">
+                        <div class="step-icon">
+                            <span class="step-number">1</span>
+                            <div class="step-status-indicator"></div>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-name">Video Analysis</div>
+                            <div class="step-description">Analyzing content with AI</div>
+                        </div>
+                    </div>
+
+                    <div class="step-item" data-step="2">
+                        <div class="step-icon">
+                            <span class="step-number">2</span>
+                            <div class="step-status-indicator"></div>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-name">TTS Generation</div>
+                            <div class="step-description">Creating voiceover</div>
+                        </div>
+                    </div>
+
+                    <div class="step-item" data-step="3">
+                        <div class="step-icon">
+                            <span class="step-number">3</span>
+                            <div class="step-status-indicator"></div>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-name">Subtitle Generation</div>
+                            <div class="step-description">Generating subtitles</div>
+                        </div>
+                    </div>
+
+                    <div class="step-item" data-step="4">
+                        <div class="step-icon">
+                            <span class="step-number">4</span>
+                            <div class="step-status-indicator"></div>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-name">Color Replacement</div>
+                            <div class="step-description">Adjusting colors</div>
+                        </div>
+                    </div>
+
+                    <div class="step-item" data-step="5">
+                        <div class="step-icon">
+                            <span class="step-number">5</span>
+                            <div class="step-status-indicator"></div>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-name">Video Reformatting</div>
+                            <div class="step-description">Converting to 9:16</div>
+                        </div>
+                    </div>
+
+                    <div class="step-item" data-step="6">
+                        <div class="step-icon">
+                            <span class="step-number">6</span>
+                            <div class="step-status-indicator"></div>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-name">Subtitle Burning</div>
+                            <div class="step-description">Finalizing video</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Logs -->
+            <div class="logs-container">
+                <div class="logs-header">
+                    <h3 class="logs-title">📋 Live Logs</h3>
+                    <button id="clearLogsBtn" class="btn-clear">Clear</button>
+                </div>
+                <div class="logs-terminal" id="logsTerminal">
+                    <div class="log-entry">Ready to process...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Download Section -->
+        <section class="card download-section hidden" id="downloadSection">
+            <h2 class="section-title">📥 Download Results</h2>
+            <p class="section-description">Your processed files are ready!</p>
+            <div class="download-grid" id="downloadGrid">
+                <!-- Download links will be inserted here -->
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Made with ❤️ by Thariq | Powered by AI</p>
+        </footer>
+    </div>
+
+    <!-- Socket.IO Client -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

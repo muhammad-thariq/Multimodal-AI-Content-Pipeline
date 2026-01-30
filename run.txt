@@ -4,7 +4,7 @@ python analyze_cat_video.py --video video1.mp4 --out output.txt --fps 1.0
 
 // put into input.txt 
 
-python -u "c:\Users\Thariq\Documents\ITS\PROJECT\PCC-v2\kokoro_heart.py"
+python -u "C:\Users\Thariq\Documents\GitHub\HM-Tools-YTAutomation\kokoro_heart.py"
 
 stable-ts heart_all.wav --output heart_all.srt --output_format srt --device cuda --language en --word_timestamps True --max_chars 42 --max_words 3
 

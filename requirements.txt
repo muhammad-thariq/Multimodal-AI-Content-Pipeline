@@ -29,4 +29,9 @@ kokoro>=0.9.4
 stable-ts>=2.13.2
 # (stable-ts will pull Whisper; adding explicitly for clarity)
 openai-whisper>=20231117
-flask
+
+# === Flask web framework and WebSocket support ===
+flask>=3.0.0
+flask-socketio>=5.3.0
+python-socketio>=5.11.0
+python-engineio>=4.9.0
