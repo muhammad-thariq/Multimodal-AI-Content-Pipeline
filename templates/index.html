@@ -19,37 +19,85 @@
                 <h1 class="title">
                     <span class="gradient-text">AI Shorts Generator</span>
                 </h1>
-                <p class="subtitle">Transform your videos into engaging 9:16 shorts with AI-powered automated scripting
+                <p class="subtitle">Transform your videos into engaging 9:16 shorts with AI-powered automated scripting.
                 </p>
+                <br>
             </div>
         </header>
 
-        <!-- Upload Section -->
-        <section class="card upload-section">
-            <h2 class="section-title">📹 Upload Video</h2>
-            <div class="upload-zone" id="uploadZone">
-                <input type="file" id="videoInput" accept="video/*" hidden>
-                <div class="upload-icon">🎬</div>
-                <p class="upload-text">Drag & drop your video here</p>
-                <p class="upload-subtext">or click to browse</p>
+        <!-- ===== TOP ROW: Media Input + Script Generator ===== -->
+        <div class="top-row">
+            <!-- LEFT: Media Input -->
+            <section class="card media-card">
+                <div class="card-header">
+                    <h2 class="section-title">📼 Media Input</h2>
+                    <button class="btn-link hidden" id="removeVideoBtn">Remove Video</button>
+                </div>
+
+                <div class="upload-zone" id="uploadZone">
+                    <input type="file" id="videoInput" accept="video/*" hidden>
+                    <div id="uploadPlaceholder">
+                        <div class="upload-icon">🎬</div>
+                        <p class="upload-text">Drag & drop your video here</p>
+                        <p class="upload-subtext">or click to browse (MP4, MOV)</p>
+                    </div>
+                    <video id="videoPreview" class="video-preview hidden" controls muted></video>
+                </div>
+
                 <div id="filePreview" class="file-preview hidden"></div>
-            </div>
-        </section>
 
+                <div class="video-topic-container">
+                    <label class="topic-label" for="videoTopic">Video Topic / Context (Optional)</label>
+                    <input type="text" id="videoTopic" class="topic-input"
+                        placeholder="e.g., A fascinating space fact...">
+                </div>
 
-        <!-- Start Button -->
-        <div class="action-section">
-            <button id="startBtn" class="btn-primary">
-                <span class="btn-icon">🚀</span>
-                <span class="btn-text">Start Processing</span>
-            </button>
+                <button id="startBtn" class="btn-primary">
+                    <span class="btn-icon">🚀</span>
+                    <span class="btn-text">Start Processing</span>
+                </button>
+            </section>
+
+            <!-- RIGHT: Script Generator -->
+            <section class="card script-card">
+                <div class="card-header">
+                    <h2 class="section-title">✏️ Script Generator</h2>
+                    <span class="char-badge" id="charCounter">0 chars</span>
+                </div>
+
+                <div class="script-textarea-container">
+                    <textarea class="script-textarea" id="scriptTextarea" autocomplete="off" spellcheck="false"
+                        placeholder="Your generated script will appear here..."></textarea>
+                    <div id="scriptOverlayText" class="script-overlay">
+                        Upload a video and start processing to generate a script.
+                    </div>
+                </div>
+
+                <div class="script-btn-row" id="scriptActions">
+                    <button class="script-action-btn btn-enabled-regenerate" id="btnRegenerate" disabled>
+                        <span class="sa-icon">🔄</span>
+                        <span class="sa-label">Regenerate</span>
+                    </button>
+                    <button class="script-action-btn btn-enabled-polish" id="btnPolish" disabled>
+                        <span class="sa-icon">✨</span>
+                        <span class="sa-label">Polish</span>
+                    </button>
+                    <button class="script-action-btn btn-enabled-save" id="btnSaveEdit" disabled>
+                        <span class="sa-icon">💾</span>
+                        <span class="sa-label">Save</span>
+                    </button>
+                    <button class="script-action-btn btn-enabled-approve" id="btnApprove" disabled>
+                        <span class="sa-icon">✅</span>
+                        <span class="sa-label">Approve</span>
+                    </button>
+                </div>
+            </section>
         </div>
 
         <!-- Progress Section -->
         <section class="card progress-section hidden" id="progressSection">
             <h2 class="section-title">⚙️ Processing Status</h2>
 
-            <!-- Overall Progress -->
             <div class="progress-container">
                 <div class="progress-header">
                     <span class="progress-label">Overall Progress</span>
@@ -61,81 +109,53 @@
                 <p class="progress-message" id="progressMessage">Initializing...</p>
             </div>
 
-            <!-- Pipeline Steps -->
             <div class="steps-container">
                 <h3 class="steps-title">Pipeline Steps</h3>
                 <div class="steps-grid">
                     <div class="step-item" data-step="1">
-                        <div class="step-icon">
-                            <span class="step-number">1</span>
-                            <div class="step-status-indicator"></div>
-                        </div>
+                        <div class="step-number">1</div>
                         <div class="step-content">
                             <div class="step-name">Video Analysis</div>
                             <div class="step-description">Analyzing content with AI</div>
                         </div>
                     </div>
-
                     <div class="step-item" data-step="2">
-                        <div class="step-icon">
-                            <span class="step-number">2</span>
-                            <div class="step-status-indicator"></div>
-                        </div>
+                        <div class="step-number">2</div>
                         <div class="step-content">
                             <div class="step-name">🤖 AI Script Generation</div>
-                            <div class="step-description">Ollama LLM creates comedy script</div>
+                            <div class="step-description">Ollama LLM creates script</div>
                         </div>
                     </div>
-
                     <div class="step-item" data-step="3">
-                        <div class="step-icon">
-                            <span class="step-number">3</span>
-                            <div class="step-status-indicator"></div>
-                        </div>
+                        <div class="step-number">3</div>
                         <div class="step-content">
                             <div class="step-name">TTS Generation</div>
                             <div class="step-description">Creating voiceover</div>
                         </div>
                     </div>
-
                     <div class="step-item" data-step="4">
-                        <div class="step-icon">
-                            <span class="step-number">4</span>
-                            <div class="step-status-indicator"></div>
-                        </div>
+                        <div class="step-number">4</div>
                         <div class="step-content">
                             <div class="step-name">Subtitle Generation</div>
                             <div class="step-description">Generating subtitles</div>
                         </div>
                     </div>
-
                     <div class="step-item" data-step="5">
-                        <div class="step-icon">
-                            <span class="step-number">5</span>
-                            <div class="step-status-indicator"></div>
-                        </div>
+                        <div class="step-number">5</div>
                         <div class="step-content">
                             <div class="step-name">Color Replacement</div>
                             <div class="step-description">Adjusting colors</div>
                         </div>
                     </div>
-
                     <div class="step-item" data-step="6">
-                        <div class="step-icon">
-                            <span class="step-number">6</span>
-                            <div class="step-status-indicator"></div>
-                        </div>
+                        <div class="step-number">6</div>
                         <div class="step-content">
                             <div class="step-name">Video Reformatting</div>
                             <div class="step-description">Converting to 9:16</div>
                         </div>
                     </div>
-
                     <div class="step-item" data-step="7">
-                        <div class="step-icon">
-                            <span class="step-number">7</span>
-                            <div class="step-status-indicator"></div>
-                        </div>
+                        <div class="step-number">7</div>
                         <div class="step-content">
                             <div class="step-name">Subtitle Burning</div>
                             <div class="step-description">Finalizing video</div>
@@ -144,7 +164,6 @@
                 </div>
             </div>
 
-            <!-- Live Logs -->
             <div class="logs-container">
                 <div class="logs-header">
                     <h3 class="logs-title">📋 Live Logs</h3>
@@ -156,14 +175,6 @@
             </div>
         </section>
 
-        <!-- Download Section -->
-        <section class="card download-section hidden" id="downloadSection">
-            <h2 class="section-title">📥 Download Results</h2>
-            <p class="section-description">Your processed files are ready!</p>
-            <div class="download-grid" id="downloadGrid">
-                <!-- Download links will be inserted here -->
-            </div>
-        </section>
 
         <!-- Footer -->
         <footer class="footer">
@@ -171,7 +182,6 @@
         </footer>
     </div>
 
-    <!-- Socket.IO Client -->
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>

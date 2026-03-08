@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import subprocess
 import threading
@@ -22,6 +23,12 @@ VENV_SCRIPTS = Path(VENV_PYTHON).parent  # ...\.venv\Scripts
 app = Flask(__name__)
 app.secret_key = "super-secret-thariq"
 socketio = SocketIO(app, cors_allowed_origins="*")
+
+# -------------------------------------------------------
+# HUMAN-IN-THE-LOOP GATE  (for script review after step 2)
+# -------------------------------------------------------
+script_review_gate = threading.Event()
+script_review_action = {"action": "approve", "text": ""}
 
 # -------------------------------------------------------
 # PIPELINE STEPS CONFIGURATION
@@ -241,7 +248,7 @@ def process_pipeline():
             socketio.emit("processing_error", {"message": "Video analysis failed"})
             return
 
-        # Step 2: ollama_generate_script.py (NEW)
+        # Step 2: ollama_generate_script.py
         step = PIPELINE_STEPS[1]
         ok, log = run_cmd(
             [VENV_PYTHON, str(SCRIPTS_DIR / "ollama_generate_script.py")],
@@ -252,6 +259,44 @@ def process_pipeline():
             emit_log("❌ Pipeline failed at step 2 (Ollama script generation)")
             socketio.emit("processing_error", {"message": "AI script generation failed"})
             return
+
+        # ── HUMAN-IN-THE-LOOP: pause for script review ──
+        while True:
+            input_txt_path = PCC_DIR / UPLOAD_TEXT_NAME
+            script_text = input_txt_path.read_text(encoding="utf-8", errors="ignore") if input_txt_path.exists() else ""
+
+            emit_log("✏️ Waiting for script review...")
+            socketio.emit("script_review", {"script": script_text})
+
+            # Block until user responds
+            script_review_gate.clear()
+            script_review_gate.wait()
+
+            action = script_review_action["action"]
+            new_text = script_review_action["text"]
+
+            if action in ["regenerate", "polish"]:
+                verb = "Polishing" if action == "polish" else "Regenerating"
+                emit_log(f"🔄 {verb} script (re-running Ollama)...")
+                ok, log = run_cmd(
+                    [VENV_PYTHON, str(SCRIPTS_DIR / "ollama_generate_script.py")],
+                    PCC_DIR,
+                    step,
+                )
+                if not ok:
+                    emit_log("❌ Regeneration failed")
+                    socketio.emit("processing_error", {"message": "Script regeneration failed"})
+                    return
+                # Loop back to show the new script for review
+                continue
+
+            if action == "edit":
+                input_txt_path.write_text(new_text, encoding="utf-8")
+                emit_log("✅ Script updated with your edits")
+
+            # action == "approve" or "edit" -> continue pipeline
+            emit_log("✅ Script approved — continuing pipeline")
+            break
 
         # Step 3: kokoro_heart.py
         step = PIPELINE_STEPS[2]
@@ -297,7 +342,7 @@ def process_pipeline():
                 "--max_chars",
                 "42",
                 "--max_words",
-                "3",
+                "4",
             ],
             PCC_DIR,
             step,
@@ -482,6 +527,17 @@ def handle_connect():
 def handle_disconnect():
     """Handle client disconnection."""
     print("Client disconnected")
+
+
+@socketio.on("script_review_response")
+def handle_script_review(data):
+    """Handle user's script review decision: approve, edit, or regenerate."""
+    global script_review_action
+    script_review_action = {
+        "action": data.get("action", "approve"),
+        "text": data.get("text", ""),
+    }
+    script_review_gate.set()
 
 
 if __name__ == "__main__":

@@ -10,25 +10,32 @@ let isProcessing = false;
 // ==========================================
 const elements = {
   uploadZone: document.getElementById('uploadZone'),
+  uploadPlaceholder: document.getElementById('uploadPlaceholder'),
   videoInput: document.getElementById('videoInput'),
+  videoPreview: document.getElementById('videoPreview'),
   filePreview: document.getElementById('filePreview'),
+  removeVideoBtn: document.getElementById('removeVideoBtn'),
+  videoTopic: document.getElementById('videoTopic'),
 
-  // Start Button
   startBtn: document.getElementById('startBtn'),
 
-  // Progress
   progressSection: document.getElementById('progressSection'),
   progressFill: document.getElementById('progressFill'),
   progressPercentage: document.getElementById('progressPercentage'),
   progressMessage: document.getElementById('progressMessage'),
 
-  // Logs
   logsTerminal: document.getElementById('logsTerminal'),
   clearLogsBtn: document.getElementById('clearLogsBtn'),
 
-  // Download
-  downloadSection: document.getElementById('downloadSection'),
-  downloadGrid: document.getElementById('downloadGrid'),
+  // Script Generator
+  scriptTextarea: document.getElementById('scriptTextarea'),
+  scriptOverlayText: document.getElementById('scriptOverlayText'),
+  charCounter: document.getElementById('charCounter'),
+  scriptActions: document.getElementById('scriptActions'),
+  btnRegenerate: document.getElementById('btnRegenerate'),
+  btnPolish: document.getElementById('btnPolish'),
+  btnSaveEdit: document.getElementById('btnSaveEdit'),
+  btnApprove: document.getElementById('btnApprove'),
 };
 
 // ==========================================
@@ -38,12 +45,10 @@ function initializeSocket() {
   socket = io();
 
   socket.on('connect', () => {
-    console.log('✅ Connected to server');
     addLog('🔌 Connected to server', 'success');
   });
 
   socket.on('disconnect', () => {
-    console.log('❌ Disconnected from server');
     addLog('🔌 Disconnected from server', 'error');
   });
 
@@ -66,29 +71,28 @@ function initializeSocket() {
   socket.on('processing_error', (data) => {
     onProcessingError(data.message);
   });
+
+  socket.on('script_review', (data) => {
+    showScriptForReview(data.script);
+  });
 }
 
 // ==========================================
-// FILE UPLOAD HANDLERS
+// FILE UPLOAD
 // ==========================================
 function setupFileUpload() {
-  // Click to upload
-  elements.uploadZone.addEventListener('click', () => {
-    if (!isProcessing) {
-      elements.videoInput.click();
-    }
+  elements.uploadZone.addEventListener('click', (e) => {
+    if (e.target.closest('video')) return;
+    if (!isProcessing) elements.videoInput.click();
   });
 
   elements.videoInput.addEventListener('change', (e) => {
     handleFileSelect(e.target.files[0]);
   });
 
-  // Drag and drop
   elements.uploadZone.addEventListener('dragover', (e) => {
     e.preventDefault();
-    if (!isProcessing) {
-      elements.uploadZone.classList.add('dragover');
-    }
+    if (!isProcessing) elements.uploadZone.classList.add('dragover');
   });
 
   elements.uploadZone.addEventListener('dragleave', (e) => {
@@ -99,29 +103,53 @@ function setupFileUpload() {
   elements.uploadZone.addEventListener('drop', (e) => {
     e.preventDefault();
     elements.uploadZone.classList.remove('dragover');
-
     if (!isProcessing) {
       const file = e.dataTransfer.files[0];
       if (file && file.type.startsWith('video/')) {
         handleFileSelect(file);
       } else {
-        alert('Please drop a valid video file');
+        alert('Please drop a valid video file (MP4, MOV)');
       }
     }
+  });
+
+  // Remove video button
+  elements.removeVideoBtn.addEventListener('click', () => {
+    if (isProcessing) return;
+    videoFile = null;
+    elements.videoPreview.src = '';
+    elements.videoPreview.classList.add('hidden');
+    elements.uploadPlaceholder.classList.remove('hidden');
+    elements.filePreview.classList.add('hidden');
+    elements.removeVideoBtn.classList.add('hidden');
+    elements.videoInput.value = '';
+
+    // Reset dashed styling
+    elements.uploadZone.style.borderStyle = 'dashed';
+    elements.uploadZone.style.padding = 'var(--spacing-lg)';
   });
 }
 
 function handleFileSelect(file) {
-  if (!file) return;
-
-  if (!file.type.startsWith('video/')) {
+  if (!file || !file.type.startsWith('video/')) {
     alert('Please select a video file');
     return;
   }
 
   videoFile = file;
+
+  const url = URL.createObjectURL(file);
+  elements.videoPreview.src = url;
+  elements.videoPreview.classList.remove('hidden');
+  elements.uploadPlaceholder.classList.add('hidden');
+  elements.removeVideoBtn.classList.remove('hidden');
+
   elements.filePreview.textContent = `✓ ${file.name} (${formatFileSize(file.size)})`;
   elements.filePreview.classList.remove('hidden');
+
+  // Hide border when video is shown to match screenshot 1 perfectly
+  elements.uploadZone.style.borderStyle = 'none';
+  elements.uploadZone.style.padding = '0';
 }
 
 function formatFileSize(bytes) {
@@ -132,20 +160,26 @@ function formatFileSize(bytes) {
   return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
 }
 
-
-
 // ==========================================
 // START PROCESSING
 // ==========================================
 function setupStartButton() {
   elements.startBtn.addEventListener('click', async () => {
-    // Validation - only check for video file
+    // If button is in download mode, trigger the download
+    if (finalVideoUrl) {
+      window.open(finalVideoUrl, '_blank');
+      // Reset button back to Start Processing after download
+      finalVideoUrl = null;
+      elements.startBtn.querySelector('.btn-icon').textContent = '🚀';
+      elements.startBtn.querySelector('.btn-text').textContent = 'Start Processing';
+      elements.startBtn.classList.remove('btn-download-ready');
+      return;
+    }
+
     if (!videoFile) {
       alert('Please upload a video file first');
       return;
     }
-
-    // Start processing
     await startProcessing();
   });
 }
@@ -156,39 +190,40 @@ async function startProcessing() {
     elements.startBtn.disabled = true;
     elements.startBtn.querySelector('.btn-text').textContent = 'Processing...';
 
-    // Show progress section
     elements.progressSection.classList.remove('hidden');
-    elements.downloadSection.classList.add('hidden');
 
-    // Reset progress
     updateProgress(0, 'Initializing...');
     clearLogs();
 
-    // Reset all steps to queued (now 7 steps)
     for (let i = 1; i <= 7; i++) {
-      updateStepStatus(i, 'queued', 'Waiting...');
+      updateStepStatus(i, 'queued');
     }
 
-    // Prepare form data - only send video file
+    // Reset script editor
+    elements.scriptTextarea.value = '';
+    elements.charCounter.textContent = '0 chars';
+    elements.scriptOverlayText.classList.remove('hidden');
+    elements.scriptOverlayText.textContent = 'Processing video to generate script...';
+    setScriptButtonsDisabled(true);
+
     const formData = new FormData();
     formData.append('video_file', videoFile);
+    // Include video topic if provided
+    if (elements.videoTopic.value.trim() !== '') {
+      formData.append('video_topic', elements.videoTopic.value.trim());
+    }
 
-    // Send request
     const response = await fetch('/start_processing', {
       method: 'POST',
       body: formData
     });
 
     const result = await response.json();
-
-    if (result.status === 'error') {
-      throw new Error(result.message);
-    }
+    if (result.status === 'error') throw new Error(result.message);
 
     addLog('✅ Processing request sent successfully', 'success');
 
   } catch (error) {
-    console.error('Error starting processing:', error);
     addLog(`❌ Error: ${error.message}`, 'error');
     resetProcessingState();
     alert(`Failed to start processing: ${error.message}`);
@@ -201,42 +236,24 @@ async function startProcessing() {
 function updateProgress(percentage, message = '') {
   elements.progressFill.style.width = `${percentage}%`;
   elements.progressPercentage.textContent = `${Math.round(percentage)}%`;
-
-  if (message) {
-    elements.progressMessage.textContent = message;
-  }
+  if (message) elements.progressMessage.textContent = message;
 }
 
-function updateStepStatus(stepId, status, message = '') {
-  const stepElement = document.querySelector(`.step-item[data-step="${stepId}"]`);
-  if (!stepElement) return;
-
-  // Remove all status classes
-  stepElement.classList.remove('queued', 'running', 'completed', 'failed');
-
-  // Add new status class
-  stepElement.classList.add(status);
-
-  // Update description if message provided
-  if (message) {
-    const descriptionElement = stepElement.querySelector('.step-description');
-    if (descriptionElement) {
-      descriptionElement.textContent = message;
-    }
-  }
+function updateStepStatus(stepId, status) {
+  const el = document.querySelector(`.step-item[data-step="${stepId}"]`);
+  if (!el) return;
+  el.classList.remove('queued', 'running', 'completed', 'failed');
+  el.classList.add(status);
 }
 
 // ==========================================
 // LOG MANAGEMENT
 // ==========================================
 function addLog(message, type = '') {
-  const logEntry = document.createElement('div');
-  logEntry.className = `log-entry ${type}`;
-  logEntry.textContent = message;
-
-  elements.logsTerminal.appendChild(logEntry);
-
-  // Auto-scroll to bottom
+  const entry = document.createElement('div');
+  entry.className = `log-entry ${type}`;
+  entry.textContent = message;
+  elements.logsTerminal.appendChild(entry);
   elements.logsTerminal.scrollTop = elements.logsTerminal.scrollHeight;
 }
 
@@ -249,71 +266,98 @@ function setupClearLogs() {
 }
 
 // ==========================================
-// PROCESSING COMPLETE
+// SCRIPT REVIEW ACTIONS
 // ==========================================
-function onProcessingComplete(files) {
-  isProcessing = false;
-  elements.startBtn.disabled = false;
-  elements.startBtn.querySelector('.btn-text').textContent = 'Start Processing';
+function showScriptForReview(scriptText) {
+  elements.scriptTextarea.value = scriptText;
+  elements.charCounter.textContent = `${scriptText.length} chars`;
 
-  addLog('🎉 All processing completed!', 'success');
+  // Hide the center overlay text
+  elements.scriptOverlayText.classList.add('hidden');
 
-  // Show download section
-  elements.downloadSection.classList.remove('hidden');
-
-  // Display download links
-  displayDownloadLinks(files);
+  setScriptButtonsDisabled(false);
+  elements.scriptTextarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  elements.scriptTextarea.focus();
 }
 
-function displayDownloadLinks(files) {
-  elements.downloadGrid.innerHTML = '';
+function setScriptButtonsDisabled(disabled) {
+  elements.btnApprove.disabled = disabled;
+  elements.btnSaveEdit.disabled = disabled;
+  elements.btnPolish.disabled = disabled;
+  elements.btnRegenerate.disabled = disabled;
+}
 
-  files.forEach(filename => {
-    const downloadItem = createDownloadItem(filename);
-    elements.downloadGrid.appendChild(downloadItem);
+function setupScriptReview() {
+  elements.scriptTextarea.addEventListener('input', () => {
+    elements.charCounter.textContent = `${elements.scriptTextarea.value.length} chars`;
+    if (elements.scriptTextarea.value.trim() === '') {
+      elements.scriptOverlayText.classList.remove('hidden');
+      elements.scriptOverlayText.textContent = 'Script is empty. Type or regenerate.';
+    } else {
+      elements.scriptOverlayText.classList.add('hidden');
+    }
+  });
+
+  elements.btnRegenerate.addEventListener('click', () => {
+    setScriptButtonsDisabled(true);
+    socket.emit('script_review_response', { action: 'regenerate', text: '' });
+    elements.scriptOverlayText.classList.remove('hidden');
+    elements.scriptOverlayText.textContent = '🔄 Regenerating script...';
+    elements.scriptTextarea.value = '';
+    addLog('🔄 Regenerating script...', 'warning');
+  });
+
+  elements.btnPolish.addEventListener('click', () => {
+    setScriptButtonsDisabled(true);
+
+    // We send 'polish' back. We will need to update app.py to handle "polish" if we want to do something with it. 
+    // Right now, we can treat it like generate but maybe a different prompt in backend? 
+    // For now, emit it so UI functions correctly.
+    socket.emit('script_review_response', { action: 'polish', text: elements.scriptTextarea.value });
+
+    elements.scriptOverlayText.classList.remove('hidden');
+    elements.scriptOverlayText.textContent = '✨ Polishing script...';
+    elements.scriptTextarea.value = '';
+    addLog('✨ Polishing script...', 'warning');
+  });
+
+  elements.btnSaveEdit.addEventListener('click', () => {
+    setScriptButtonsDisabled(true);
+    socket.emit('script_review_response', { action: 'edit', text: elements.scriptTextarea.value });
+    addLog('💾 Script edits saved', 'success');
+  });
+
+  elements.btnApprove.addEventListener('click', () => {
+    setScriptButtonsDisabled(true);
+    socket.emit('script_review_response', { action: 'approve', text: '' });
+    addLog('✅ Script approved', 'success');
   });
 }
 
-function createDownloadItem(filename) {
-  const a = document.createElement('a');
-  a.href = `/files/${filename}`;
-  a.className = 'download-item';
-  a.target = '_blank';
+// ==========================================
+// PROCESSING COMPLETE
+// ==========================================
+let finalVideoUrl = null;
 
-  const icon = getFileIcon(filename);
-  const type = getFileType(filename);
+function onProcessingComplete(files) {
+  isProcessing = false;
+  addLog('🎉 All processing completed!', 'success');
 
-  a.innerHTML = `
-        <div class="download-icon">${icon}</div>
-        <div class="download-info">
-            <div class="download-name">${filename}</div>
-            <div class="download-type">${type}</div>
-        </div>
-    `;
+  // Find the final burned-subtitle video (the last mp4 that isn't output_9x16_letterbox.mp4)
+  const finalVideo = files.reverse().find(f =>
+    f.endsWith('.mp4') && f !== 'output_9x16_letterbox.mp4'
+  );
 
-  return a;
-}
-
-function getFileIcon(filename) {
-  const ext = filename.split('.').pop().toLowerCase();
-  const iconMap = {
-    'mp4': '🎥',
-    'txt': '📄',
-    'wav': '🔊',
-    'srt': '💬',
-  };
-  return iconMap[ext] || '📁';
-}
-
-function getFileType(filename) {
-  const ext = filename.split('.').pop().toLowerCase();
-  const typeMap = {
-    'mp4': 'Video File',
-    'txt': 'Text File',
-    'wav': 'Audio File',
-    'srt': 'Subtitle File',
-  };
-  return typeMap[ext] || 'File';
+  if (finalVideo) {
+    finalVideoUrl = `/files/${encodeURIComponent(finalVideo)}`;
+    elements.startBtn.disabled = false;
+    elements.startBtn.querySelector('.btn-icon').textContent = '✅';
+    elements.startBtn.querySelector('.btn-text').textContent = 'Download Video';
+    elements.startBtn.classList.add('btn-download-ready');
+  } else {
+    // Fallback if no final video found
+    resetProcessingState();
+  }
 }
 
 // ==========================================
@@ -329,34 +373,16 @@ function resetProcessingState() {
   isProcessing = false;
   elements.startBtn.disabled = false;
   elements.startBtn.querySelector('.btn-text').textContent = 'Start Processing';
+  setScriptButtonsDisabled(false); // In case it failed mid-review
 }
 
 // ==========================================
-// LOAD EXISTING FILES
-// ==========================================
-async function loadExistingFiles() {
-  try {
-    const response = await fetch('/existing_files');
-    const data = await response.json();
-
-    if (data.files && data.files.length > 0) {
-      elements.downloadSection.classList.remove('hidden');
-      displayDownloadLinks(data.files);
-    }
-  } catch (error) {
-    console.error('Error loading existing files:', error);
-  }
-}
-
-// ==========================================
-// INITIALIZATION
+// INITIALIZE
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
   initializeSocket();
   setupFileUpload();
   setupStartButton();
   setupClearLogs();
-  loadExistingFiles();
-
-  console.log('🚀 Application initialized');
+  setupScriptReview();
 });
