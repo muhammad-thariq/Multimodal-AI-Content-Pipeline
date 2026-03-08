@@ -32,38 +32,45 @@ PIPELINE_STEPS = [
         "name": "Video Analysis",
         "description": "Analyzing video content with AI",
         "progress_start": 0,
-        "progress_end": 15,
+        "progress_end": 12,
     },
     {
         "id": 2,
-        "name": "TTS Generation",
-        "description": "Generating text-to-speech audio",
-        "progress_start": 15,
-        "progress_end": 30,
+        "name": "AI Script Generation",
+        "description": "Generating script with Ollama LLM",
+        "progress_start": 12,
+        "progress_end": 25,
     },
     {
         "id": 3,
-        "name": "Subtitle Generation",
-        "description": "Creating subtitles with Whisper",
-        "progress_start": 30,
-        "progress_end": 50,
+        "name": "TTS Generation",
+        "description": "Generating text-to-speech audio",
+        "progress_start": 25,
+        "progress_end": 35,
     },
     {
         "id": 4,
-        "name": "Color Replacement",
-        "description": "Adjusting subtitle colors",
-        "progress_start": 50,
-        "progress_end": 60,
+        "name": "Subtitle Generation",
+        "description": "Creating subtitles with Whisper",
+        "progress_start": 35,
+        "progress_end": 55,
     },
     {
         "id": 5,
-        "name": "Video Reformatting",
-        "description": "Converting to 9:16 format",
-        "progress_start": 60,
-        "progress_end": 80,
+        "name": "Color Replacement",
+        "description": "Adjusting subtitle colors",
+        "progress_start": 55,
+        "progress_end": 62,
     },
     {
         "id": 6,
+        "name": "Video Reformatting",
+        "description": "Converting to 9:16 format",
+        "progress_start": 62,
+        "progress_end": 80,
+    },
+    {
+        "id": 7,
         "name": "Subtitle Burning",
         "description": "Burning subtitles into video",
         "progress_start": 80,
@@ -217,8 +224,20 @@ def process_pipeline():
             socketio.emit("processing_error", {"message": "Video analysis failed"})
             return
 
-        # Step 2: kokoro_heart.py
+        # Step 2: ollama_generate_script.py (NEW)
         step = PIPELINE_STEPS[1]
+        ok, log = run_cmd(
+            [VENV_PYTHON, str(SCRIPTS_DIR / "ollama_generate_script.py")],
+            PCC_DIR,
+            step,
+        )
+        if not ok:
+            emit_log("❌ Pipeline failed at step 2 (Ollama script generation)")
+            socketio.emit("processing_error", {"message": "AI script generation failed"})
+            return
+
+        # Step 3: kokoro_heart.py
+        step = PIPELINE_STEPS[2]
         # Delete existing heart_all.wav to avoid any prompts
         heart_wav = PCC_DIR / "heart_all.wav"
         if heart_wav.exists():
@@ -231,12 +250,12 @@ def process_pipeline():
             step,
         )
         if not ok:
-            emit_log("❌ Pipeline failed at step 2")
+            emit_log("❌ Pipeline failed at step 3")
             socketio.emit("processing_error", {"message": "TTS generation failed"})
             return
 
-        # Step 3: stable-ts
-        step = PIPELINE_STEPS[2]
+        # Step 4: stable-ts
+        step = PIPELINE_STEPS[3]
         # CRITICAL: Delete existing heart_all.srt to prevent user input prompt (y/n)
         heart_srt = PCC_DIR / "heart_all.srt"
         if heart_srt.exists():
@@ -267,12 +286,12 @@ def process_pipeline():
             step,
         )
         if not ok:
-            emit_log("❌ Pipeline failed at step 3")
+            emit_log("❌ Pipeline failed at step 4")
             socketio.emit("processing_error", {"message": "Subtitle generation failed"})
             return
 
-        # Step 4: PowerShell color replacement
-        step = PIPELINE_STEPS[3]
+        # Step 5: PowerShell color replacement
+        step = PIPELINE_STEPS[4]
         emit_step_status(step["id"], "running", step["description"])
         emit_log(f"▶ Running: PowerShell color replacement")
         
@@ -291,8 +310,8 @@ def process_pipeline():
             emit_step_status(step["id"], "completed", "Color replacement done")
             emit_progress(step["progress_end"])
 
-        # Step 5: rearrange_9x16.py
-        step = PIPELINE_STEPS[4]
+        # Step 6: rearrange_9x16.py
+        step = PIPELINE_STEPS[5]
         # Delete existing output video to avoid any prompts
         output_video = PCC_DIR / "output_9x16_letterbox.mp4"
         if output_video.exists():
@@ -315,12 +334,12 @@ def process_pipeline():
             step,
         )
         if not ok:
-            emit_log("❌ Pipeline failed at step 5")
+            emit_log("❌ Pipeline failed at step 6")
             socketio.emit("processing_error", {"message": "Video reformatting failed"})
             return
 
-        # Step 6: burn_hardsub_fit_ass.py
-        step = PIPELINE_STEPS[5]
+        # Step 7: burn_hardsub_fit_ass.py
+        step = PIPELINE_STEPS[6]
         ok, log = run_cmd(
             [
                 VENV_PYTHON,  # Using venv Python
@@ -337,7 +356,7 @@ def process_pipeline():
             step,
         )
         if not ok:
-            emit_log("❌ Pipeline failed at step 6")
+            emit_log("❌ Pipeline failed at step 7")
             socketio.emit("processing_error", {"message": "Subtitle burning failed"})
             return
 
@@ -395,14 +414,9 @@ def start_processing():
         else:
             emit_log("⚠ No video file in request")
 
-        # Handle script description text input
-        script_description = request.form.get("script_description", "").strip()
-        if script_description:
-            text_path = PCC_DIR / UPLOAD_TEXT_NAME
-            text_path.write_text(script_description, encoding="utf-8")
-            emit_log(f"📝 Script description saved ({len(script_description)} chars)")
-        else:
-            emit_log("⚠ No script description provided, using existing input.txt")
+        # Script will be automatically generated by Ollama after video analysis
+        emit_log("🤖 Script will be auto-generated by AI from video analysis")
+
 
         # Start processing in background thread
         thread = threading.Thread(target=process_pipeline)

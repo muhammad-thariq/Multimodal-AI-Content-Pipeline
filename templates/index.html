@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <div class="container">
         <!-- Header -->
@@ -17,7 +19,8 @@
                 <h1 class="title">
                     <span class="gradient-text">AI Shorts Generator</span>
                 </h1>
-                <p class="subtitle">Transform your videos into engaging 9:16 shorts with AI narration</p>
+                <p class="subtitle">Transform your videos into engaging 9:16 shorts with AI-powered automated scripting
+                </p>
             </div>
         </header>
 
@@ -33,20 +36,6 @@
             </div>
         </section>
 
-        <!-- Script Description Section -->
-        <section class="card script-section">
-            <h2 class="section-title">✍️ Script Description</h2>
-            <p class="section-description">Enter the narration script for your video</p>
-            <textarea 
-                id="scriptInput" 
-                class="script-textarea" 
-                placeholder="Enter your video script here... (e.g., 'This cat is a master of finding fresh water')"
-                rows="6"
-            ></textarea>
-            <div class="char-counter">
-                <span id="charCount">0</span> characters
-            </div>
-        </section>
 
         <!-- Start Button -->
         <div class="action-section">
@@ -59,7 +48,7 @@
         <!-- Progress Section -->
         <section class="card progress-section hidden" id="progressSection">
             <h2 class="section-title">⚙️ Processing Status</h2>
-            
+
             <!-- Overall Progress -->
             <div class="progress-container">
                 <div class="progress-header">
@@ -93,8 +82,8 @@
                             <div class="step-status-indicator"></div>
                         </div>
                         <div class="step-content">
-                            <div class="step-name">TTS Generation</div>
-                            <div class="step-description">Creating voiceover</div>
+                            <div class="step-name">🤖 AI Script Generation</div>
+                            <div class="step-description">Ollama LLM creates comedy script</div>
                         </div>
                     </div>
 
@@ -104,8 +93,8 @@
                             <div class="step-status-indicator"></div>
                         </div>
                         <div class="step-content">
-                            <div class="step-name">Subtitle Generation</div>
-                            <div class="step-description">Generating subtitles</div>
+                            <div class="step-name">TTS Generation</div>
+                            <div class="step-description">Creating voiceover</div>
                         </div>
                     </div>
 
@@ -115,8 +104,8 @@
                             <div class="step-status-indicator"></div>
                         </div>
                         <div class="step-content">
-                            <div class="step-name">Color Replacement</div>
-                            <div class="step-description">Adjusting colors</div>
+                            <div class="step-name">Subtitle Generation</div>
+                            <div class="step-description">Generating subtitles</div>
                         </div>
                     </div>
 
@@ -126,14 +115,25 @@
                             <div class="step-status-indicator"></div>
                         </div>
                         <div class="step-content">
-                            <div class="step-name">Video Reformatting</div>
-                            <div class="step-description">Converting to 9:16</div>
+                            <div class="step-name">Color Replacement</div>
+                            <div class="step-description">Adjusting colors</div>
                         </div>
                     </div>
 
                     <div class="step-item" data-step="6">
                         <div class="step-icon">
                             <span class="step-number">6</span>
+                            <div class="step-status-indicator"></div>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-name">Video Reformatting</div>
+                            <div class="step-description">Converting to 9:16</div>
+                        </div>
+                    </div>
+
+                    <div class="step-item" data-step="7">
+                        <div class="step-icon">
+                            <span class="step-number">7</span>
                             <div class="step-status-indicator"></div>
                         </div>
                         <div class="step-content">
@@ -175,4 +175,5 @@
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
+
 </html>

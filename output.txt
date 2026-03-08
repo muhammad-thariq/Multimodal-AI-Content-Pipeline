@@ -1,14 +1,24 @@
 # Per-second cat activity summary for video1.mp4
 # Model: Salesforce/blip-image-captioning-large
-# Duration (approx): 10 seconds
+# Duration (approx): 20 seconds
 
-00:00 — woman in white shirt and mask petting a cat on the floor.
-00:01 — woman in white shirt and mask petting a cat on the floor.
-00:02 — woman wearing a face mask petting a cat on the floor.
-00:03 — woman wearing a face mask petting a cat on the floor.
-00:04 — someone is wearing a face mask and petting a cat.
-00:05 — woman in a face mask petting a cat on the floor.
-00:06 — woman in white shirt and glasses holding a cat in her hands.
-00:07 — woman in white shirt and glasses petting a cat with a face mask.
-00:08 — woman in white shirt and glasses petting a cat with a face mask.
-00:09 — woman in white shirt and mask petting a cat on the floor.
+00:00 — there is a cat that is laying on a bed with a blue blanket.
+00:01 — there is a cat that is laying on a bed with a blue blanket.
+00:02 — there is a cat that is laying on a bed with a blue blanket.
+00:03 — there is a cat that is laying on a bed with a blue blanket.
+00:04 — there is a cat that is laying on a bed with a blue blanket.
+00:05 — there is a cat that is laying on a bed with a blue sheet.
+00:06 — there is a cat that is laying on a bed with a blue blanket.
+00:07 — there is a cat that is laying on a bed with a blue blanket.
+00:08 — there is a cat that is laying on a bed with a blue blanket.
+00:09 — there is a cat that is laying on a bed with a blue blanket.
+00:10 — there is a cat that is laying on a bed with a blue blanket.
+00:11 — there is a cat that is laying on a bed with a blue blanket.
+00:12 — there is a cat that is laying on a bed with a blue blanket.
+00:13 — there is a cat that is laying on a bed with a blue blanket.
+00:14 — there is a cat that is laying on a bed with a blue blanket.
+00:15 — there is a cat that is laying on a bed with a blue blanket.
+00:16 — there is a cat that is laying on a bed with a blue blanket.
+00:17 — there is a cat that is laying on a bed with a blue blanket.
+00:18 — there is a cat laying on a bed with a blue comforter.
+00:19 — there is a cat that is laying on a bed with a blue blanket.

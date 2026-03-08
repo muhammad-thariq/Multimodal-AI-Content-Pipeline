@@ -9,14 +9,9 @@ let isProcessing = false;
 // DOM ELEMENTS
 // ==========================================
 const elements = {
-  // Upload
   uploadZone: document.getElementById('uploadZone'),
   videoInput: document.getElementById('videoInput'),
   filePreview: document.getElementById('filePreview'),
-
-  // Script
-  scriptInput: document.getElementById('scriptInput'),
-  charCount: document.getElementById('charCount'),
 
   // Start Button
   startBtn: document.getElementById('startBtn'),
@@ -137,30 +132,16 @@ function formatFileSize(bytes) {
   return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
 }
 
-// ==========================================
-// SCRIPT INPUT HANDLERS
-// ==========================================
-function setupScriptInput() {
-  elements.scriptInput.addEventListener('input', (e) => {
-    const count = e.target.value.length;
-    elements.charCount.textContent = count;
-  });
-}
+
 
 // ==========================================
 // START PROCESSING
 // ==========================================
 function setupStartButton() {
   elements.startBtn.addEventListener('click', async () => {
-    // Validation
+    // Validation - only check for video file
     if (!videoFile) {
       alert('Please upload a video file first');
-      return;
-    }
-
-    const scriptText = elements.scriptInput.value.trim();
-    if (!scriptText) {
-      alert('Please enter a script description');
       return;
     }
 
@@ -183,15 +164,14 @@ async function startProcessing() {
     updateProgress(0, 'Initializing...');
     clearLogs();
 
-    // Reset all steps to queued
-    for (let i = 1; i <= 6; i++) {
+    // Reset all steps to queued (now 7 steps)
+    for (let i = 1; i <= 7; i++) {
       updateStepStatus(i, 'queued', 'Waiting...');
     }
 
-    // Prepare form data
+    // Prepare form data - only send video file
     const formData = new FormData();
     formData.append('video_file', videoFile);
-    formData.append('script_description', elements.scriptInput.value.trim());
 
     // Send request
     const response = await fetch('/start_processing', {
@@ -374,7 +354,6 @@ async function loadExistingFiles() {
 document.addEventListener('DOMContentLoaded', () => {
   initializeSocket();
   setupFileUpload();
-  setupScriptInput();
   setupStartButton();
   setupClearLogs();
   loadExistingFiles();

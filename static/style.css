@@ -136,6 +136,22 @@ body {
     font-size: 0.95rem;
 }
 
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: rgba(245, 158, 11, 0.2);
+    border: 1px solid var(--warning);
+    border-radius: var(--radius-sm);
+    color: var(--warning);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: var(--spacing-xs);
+    vertical-align: middle;
+}
+
+
 /* ==========================================
    UPLOAD ZONE
    ========================================== */

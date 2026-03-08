@@ -98,14 +98,12 @@ def force_video_to_duration(clip: VideoFileClip, target_duration: float) -> Vide
     if abs(cur - target_duration) < 1e-3:
         return clip
     if cur < target_duration:
-        # loop
-        looped = clip.fx(afx.audio_loop, duration=target_duration) if clip.audio else clip
-        if not clip.audio:
-            # for pure video we need video-looping:
-            looped = clip.loop(duration=target_duration)
-        else:
-            # for video+audio we must loop both
-            looped = clip.loop(duration=target_duration)
+        # loop video
+        looped = clip.loop(duration=target_duration)
+        # loop audio separately (audio_loop expects an AudioClip, not a VideoFileClip)
+        if clip.audio is not None:
+            looped_audio = clip.audio.fx(afx.audio_loop, duration=target_duration)
+            looped = looped.set_audio(looped_audio)
         return looped.set_duration(target_duration)
     else:
         # longer -> cut
