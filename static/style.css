@@ -223,21 +223,18 @@ body {
     flex-shrink: 0;
 }
 
-.btn-autoselect {
-    margin-top: 0.75rem;
-    padding: 0.5rem 1.25rem;
-    background: linear-gradient(to right, #6366f1, #a855f7);
-    color: white;
-    border: none;
-    border-radius: var(--radius-sm);
-    font-size: 0.85rem;
-    font-weight: 500;
+.text-link {
+    color: var(--primary);
     cursor: pointer;
-    transition: opacity var(--transition-fast);
+    font-weight: 500;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    transition: all var(--transition-fast);
 }
 
-.btn-autoselect:hover {
-    opacity: 0.85;
+.text-link:hover {
+    text-decoration-color: var(--primary);
+    opacity: 0.8;
 }
 
 .autoselect-info {
@@ -490,6 +487,41 @@ body {
 .char-label {
     font-size: 0.75rem;
     color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.config-controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    align-items: center;
+    background-color: var(--surface-light);
+    padding: 1.25rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 2rem;
+    border: 1px solid var(--border);
+}
+
+.config-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.25rem 0;
+}
+
+.char-config {
+    grid-column: span 1;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.char-input-group,
+.char-lock-group {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
 }
 
 .toggle-switch {

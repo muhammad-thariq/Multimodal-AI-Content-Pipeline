@@ -26,19 +26,33 @@
             <br>
         </header>
 
+        <!-- ===== OVERALL PROGRESS BAR ===== -->
+        <section class="card" id="progressCard" style="margin-bottom: 1rem; padding-bottom: 0.2rem;">
+            <div class="progress-container">
+
+                <div class="progress-header">
+                    <h2 class="progress-label">📚 Overall Progress</h2>
+                    <span class="progress-percentage" id="progressPercentage">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <p class="progress-message" id="progressMessage">Initializing...</p>
+            </div>
+        </section>
+
         <!-- ===== TOP ROW: Media Input + Script Generator ===== -->
         <div class="top-row">
             <!-- LEFT: Media Input -->
             <section class="card media-card">
                 <div class="card-header">
-                    <h2 class="section-title">📼 Media Input</h2>
-                    <div class="media-header-actions">
-                        <span class="char-label" id="" title="">🔇Mute Audio</span>
-                        <label class="toggle-switch hidden" id="muteToggleLabel" title="Strip audio before processing">
-                            <input type="checkbox" id="muteToggle" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                        <button class="btn-danger-outline hidden" id="removeVideoBtn">Remove Video</button>
+                    <div class="media-header-actions" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                        <h2 class="section-title" style="margin: 0;">📼 Media Input</h2>
+                        
+                        <button class="btn-danger-outline hidden" id="removeVideoBtn"
+                            style="background: #e53e3e; color: white; border: none; padding: 0.35rem 0.85rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer;">
+                            Remove Video
+                        </button>
                     </div>
                 </div>
 
@@ -49,15 +63,15 @@
                             <div class="upload-split-left" id="uploadSplitLeft">
                                 <div class="upload-icon">🎬</div>
                                 <p class="upload-text">Drag & drop your video here</p>
-                                <p class="upload-subtext">or click to browse (MP4, MOV)</p>
+                                <p class="upload-subtext">or <span class="text-link">click to browse</span> (MP4, MOV)
+                                </p>
                             </div>
                             <div class="upload-split-divider"></div>
                             <div class="upload-split-right" id="uploadSplitRight">
                                 <div class="upload-icon">📂</div>
                                 <p class="upload-text">Auto-Select</p>
-                                <p class="upload-subtext">Pick the oldest video from v_raw</p>
-                                <button type="button" class="btn-autoselect" id="autoSelectBtn">Select from
-                                    v_raw</button>
+                                <p class="upload-subtext"><span class="text-link" id="autoSelectBtn">Click to pick the
+                                        oldest video</span> from v_raw</p>
                                 <div class="autoselect-info hidden" id="autoSelectInfo">
                                     <span class="autoselect-filename" id="autoSelectFilename"></span>
                                 </div>
@@ -104,15 +118,6 @@
             <section class="card script-card">
                 <div class="card-header">
                     <h2 class="section-title">✏️ Script Generator</h2>
-                    <div class="char-controls">
-                        <input type="number" class="char-input" id="charCounter" value="0" min="0"
-                            title="Target character count">
-                        <span class="char-label">chars</span>
-                        <label class="toggle-switch" title="Lock character count for AI generation">
-                            <input type="checkbox" id="charLockToggle" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
                 </div>
 
                 <div class="video-topic-container" style="margin-bottom: var(--spacing-sm);">
@@ -158,18 +163,44 @@
         </div>
 
         <!-- Progress Section -->
-        <section class="card progress-section hidden" id="progressSection">
-            <h2 class="section-title">⚙️ Processing Status</h2>
+        <section class="card progress-section" id="progressSection">
+            <h2 class="section-title">⚙️ Configurations</h2>
+            <br>
+            <div class="config-controls">
+                <!-- Mute Audio Control -->
+                <div class="config-item">
+                    <span class="char-label"><span id="muteIcon">🔇</span> Mute Audio</span>
+                    <label class="toggle-switch hidden" id="muteToggleLabel" title="Strip audio before processing">
+                        <input type="checkbox" id="muteToggle" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
 
-            <div class="progress-container">
-                <div class="progress-header">
-                    <span class="progress-label">Overall Progress</span>
-                    <span class="progress-percentage" id="progressPercentage">0%</span>
+                <!-- Add Music Control -->
+                <div class="config-item">
+                    <span class="char-label">🗣️ Add Music</span>
+                    <label class="toggle-switch" title="Add background music to the video">
+                        <input type="checkbox" id="addMusicToggle" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
                 </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill"></div>
+
+                <!-- Chars Count Control -->
+                <div class="config-item char-config">
+                    <span class="char-label">🎯 Target script length:</span>
+                    <div class="char-input-group">
+                        <input type="number" class="char-input" id="charCounter" value="0" min="0" title="Target character count">
+                        <span class="char-label">chars</span>
+                    </div>
+                    <div class="char-lock-group">
+                        <span class="char-label">(Lock:</span>
+                        <label class="toggle-switch" title="Lock character count for AI generation">
+                            <input type="checkbox" id="charLockToggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span class="char-label">)</span>
+                    </div>
                 </div>
-                <p class="progress-message" id="progressMessage">Initializing...</p>
             </div>
 
             <div class="steps-container">

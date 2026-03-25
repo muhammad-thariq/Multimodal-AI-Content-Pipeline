@@ -550,18 +550,24 @@ def process_pipeline():
 
         # Step 7: burn_hardsub_fit_ass.py
         step = PIPELINE_STEPS[6]
+        burn_cmd = [
+            VENV_PYTHON,  # Using venv Python
+            str(SCRIPTS_DIR / "burn_hardsub_fit_ass.py"),  # Absolute path - CRITICAL FIX
+            "--keep_font_color",
+            "--ass_color_order",
+            "rgb",
+            "--margin_v_ratio",
+            "0.24",
+            "--base_scale",
+            "0.056",
+        ]
+
+        add_music_file = PCC_DIR / "add_music.txt"
+        if add_music_file.exists() and add_music_file.read_text(encoding="utf-8").strip() == "true":
+            burn_cmd.append("--add-music")
+
         ok, log = run_cmd(
-            [
-                VENV_PYTHON,  # Using venv Python
-                str(SCRIPTS_DIR / "burn_hardsub_fit_ass.py"),  # Absolute path - CRITICAL FIX
-                "--keep_font_color",
-                "--ass_color_order",
-                "rgb",
-                "--margin_v_ratio",
-                "0.24",
-                "--base_scale",
-                "0.056",
-            ],
+            burn_cmd,
             PCC_DIR,
             step,
         )
@@ -671,6 +677,15 @@ def start_processing():
                 except Exception as e:
                     emit_log(f"⚠ Failed to mute raw audio: {e}")
 
+
+        # Handle add music option
+        add_music = request.form.get("add_music", "").strip()
+        am_path = PCC_DIR / "add_music.txt"
+        if add_music == "true":
+            am_path.write_text("true", encoding="utf-8")
+            emit_log("🎵 Add background music enabled")
+        elif am_path.exists():
+            am_path.unlink()
 
         # Start processing in background thread
         thread = threading.Thread(target=process_pipeline)

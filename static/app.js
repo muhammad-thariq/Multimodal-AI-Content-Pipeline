@@ -27,10 +27,11 @@ const elements = {
   completedOverlay: document.getElementById('completedOverlay'),
   completedVideoPreview: document.getElementById('completedVideoPreview'),
 
-  // Mute toggle
+  // Mute & Music toggles
   muteToggleLabel: document.getElementById('muteToggleLabel'),
   muteToggle: document.getElementById('muteToggle'),
   muteIcon: document.getElementById('muteIcon'),
+  addMusicToggle: document.getElementById('addMusicToggle'),
 
   startBtn: document.getElementById('startBtn'),
 
@@ -377,8 +378,13 @@ async function startProcessing() {
     }
 
     // Include mute raw audio flag
-    if (elements.muteToggle.checked) {
+    if (elements.muteToggle && elements.muteToggle.checked) {
       formData.append('mute_raw_audio', 'true');
+    }
+
+    // Include add music flag
+    if (elements.addMusicToggle && elements.addMusicToggle.checked) {
+      formData.append('add_music', 'true');
     }
 
     const response = await fetch('/start_processing', {

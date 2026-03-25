@@ -172,6 +172,9 @@ def main():
     ap.add_argument("--outline", type=str, default=COLOUR_BLACK)
     ap.add_argument("--keep_font_color", action="store_true", help="Convert <font color> to ASS and keep colours; otherwise strip all HTML tags")
 
+    # Add music flag
+    ap.add_argument("--add-music", action="store_true", help="Add background music to the video")
+
     # inline colour behaviour (to fix green→blue on some builds)
     ap.add_argument("--ass_color_order", choices=["bgr","rgb"], default="bgr",
                     help="Inline ASS override colour order. 'bgr' is spec; use 'rgb' if colours look swapped in your env.")
@@ -302,18 +305,31 @@ def main():
 
     # Windows-safe escaping for subtitles path
     sub_path = tmp_ass.as_posix().replace(':', r'\:').replace("'", r"\'")
-    vf = f"subtitles='{sub_path}'"
+    vf_subtitles = f"subtitles='{sub_path}'"
 
-    cmd = [
-        "ffmpeg","-y",
-        "-i", str(video_in),
-        "-vf", vf,
+    cmd = ["ffmpeg", "-y", "-i", str(video_in)]
+
+    if args.add_music:
+        music_path = Path(__file__).resolve().parent / "music" / "videoplayback.m4a"
+        if music_path.exists():
+            # Start the music file 45 seconds in
+            cmd.extend(["-ss", "45", "-i", str(music_path)])
+            # Set music volume to 20% (AI voice remains 100%)
+            cmd.extend(["-filter_complex", f"[0:v]{vf_subtitles}[v];[1:a]volume=0.2[bgm];[0:a][bgm]amix=inputs=2:duration=first:dropout_transition=2,volume=2[a]"])
+            cmd.extend(["-map", "[v]", "-map", "[a]"])
+            cmd.extend(["-c:a", "aac", "-b:a", "192k"])
+        else:
+            print(f"[WARN] Music file not found at {music_path}, falling back to video audio")
+            cmd.extend(["-vf", vf_subtitles, "-c:a", "copy"])
+    else:
+        cmd.extend(["-vf", vf_subtitles, "-c:a", "copy"])
+
+    cmd.extend([
         "-r", str(args.fps),
-        "-c:v","libx264","-preset",args.preset,"-crf",str(args.crf),"-pix_fmt","yuv420p",
-        "-c:a","copy",
-        "-movflags","+faststart",
+        "-c:v", "libx264", "-preset", args.preset, "-crf", str(args.crf), "-pix_fmt", "yuv420p",
+        "-movflags", "+faststart",
         str(video_out)
-    ]
+    ])
 
     try:
         subprocess.check_call(cmd)
