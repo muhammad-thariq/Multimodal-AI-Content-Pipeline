@@ -100,8 +100,12 @@ def main():
         
         # Read video analysis output
         print(f"[*] Reading video analysis from {INPUT_FILE}...")
-        video_analysis = read_file(INPUT_FILE)
-        print(f"[OK] Video analysis loaded ({len(video_analysis)} characters)")
+        if Path(INPUT_FILE).exists():
+            video_analysis = read_file(INPUT_FILE)
+            print(f"[OK] Video analysis loaded ({len(video_analysis)} characters)")
+        else:
+            video_analysis = ""
+            print(f"[WARN] Video analysis file {INPUT_FILE} not found. Proceeding with topic only.")
         
         # Build user message with optional weighted topic context
         if args.extend:

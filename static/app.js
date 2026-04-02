@@ -8,6 +8,7 @@ let isProcessing = false;
 let charLockActive = true;  // Toggle default ON
 let lockedCharCount = 0;    // The saved target char count
 let audioGenerated = false; // Whether TTS audio has been generated
+let isAnalysisReview = false; // Whether we're in analysis review mode
 
 // ==========================================
 // DOM ELEMENTS
@@ -99,6 +100,10 @@ function initializeSocket() {
 
   socket.on('script_review', (data) => {
     showScriptForReview(data.script);
+  });
+
+  socket.on('analysis_review', (data) => {
+    showAnalysisForReview(data.text);
   });
 
   socket.on('audio_ready', (data) => {
@@ -347,7 +352,7 @@ async function startProcessing() {
     updateProgress(0, 'Initializing...');
     clearLogs();
 
-    for (let i = 1; i <= 7; i++) {
+    for (let i = 1; i <= 8; i++) {
       updateStepStatus(i, 'queued');
     }
 
@@ -385,6 +390,12 @@ async function startProcessing() {
     // Include add music flag
     if (elements.addMusicToggle && elements.addMusicToggle.checked) {
       formData.append('add_music', 'true');
+    }
+
+    // Include skip analysis flag
+    const skipAnalysisToggle = document.getElementById('skipAnalysisToggle');
+    if (skipAnalysisToggle && skipAnalysisToggle.checked) {
+      formData.append('skip_analysis', 'true');
     }
 
     const response = await fetch('/start_processing', {
@@ -442,7 +453,36 @@ function setupClearLogs() {
 // ==========================================
 // SCRIPT REVIEW ACTIONS
 // ==========================================
+function showAnalysisForReview(analysisText) {
+  isAnalysisReview = true;
+  elements.scriptTextarea.value = analysisText;
+  const len = analysisText.length;
+  elements.charCounter.value = len;
+
+  // Hide the center overlay text
+  elements.scriptOverlayText.classList.add('hidden');
+
+  // Only enable the Approve button, hide regenerate/extend/reduce
+  elements.btnRegenerate.classList.add('hidden');
+  elements.btnExtend.classList.add('hidden');
+  elements.btnReduce.classList.add('hidden');
+  elements.btnApprove.disabled = false;
+  elements.approveIcon.textContent = '📝';
+  elements.approveLabel.textContent = 'Approve Analysis';
+
+  elements.scriptTextarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  elements.scriptTextarea.focus();
+  addLog('📝 Analysis ready for review — edit if needed, then click Approve Analysis', 'success');
+}
+
 function showScriptForReview(scriptText) {
+  isAnalysisReview = false;
+
+  // Restore script review buttons
+  elements.btnRegenerate.classList.remove('hidden');
+  elements.btnExtend.classList.remove('hidden');
+  elements.btnReduce.classList.remove('hidden');
+
   elements.scriptTextarea.value = scriptText;
   const len = scriptText.length;
   elements.charCounter.value = len;
@@ -556,10 +596,18 @@ function setupScriptReview() {
     addLog('➖ Reducing script by ~50%...', 'warning');
   });
 
-  // Approve button: dual-purpose (Generate Audio / Approve)
+  // Approve button: triple-purpose (Approve Analysis / Generate Audio / Approve)
   elements.btnApprove.addEventListener('click', () => {
     setScriptButtonsDisabled(true);
-    if (!audioGenerated) {
+    if (isAnalysisReview) {
+      // Analysis review mode: approve the analysis
+      socket.emit('analysis_review_response', { action: 'approve', text: elements.scriptTextarea.value });
+      isAnalysisReview = false;
+      elements.scriptOverlayText.classList.remove('hidden');
+      elements.scriptOverlayText.textContent = '🤖 Generating script with AI...';
+      elements.scriptTextarea.value = '';
+      addLog('✅ Analysis approved', 'success');
+    } else if (!audioGenerated) {
       // First click: generate audio
       // Save the script text first
       socket.emit('script_review_response', { action: 'generate_audio', text: elements.scriptTextarea.value });

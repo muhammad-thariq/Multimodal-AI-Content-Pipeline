@@ -26,8 +26,13 @@ app.secret_key = "super-secret-thariq"
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 # -------------------------------------------------------
-# HUMAN-IN-THE-LOOP GATE  (for script review after step 2)
+# HUMAN-IN-THE-LOOP GATES
 # -------------------------------------------------------
+# Gate for analysis review (after step 1, before script generation)
+analysis_review_gate = threading.Event()
+analysis_review_action = {"action": "approve", "text": ""}
+
+# Gate for script review (after step 2)
 script_review_gate = threading.Event()
 script_review_action = {"action": "approve", "text": ""}
 
@@ -40,45 +45,52 @@ PIPELINE_STEPS = [
         "name": "Video Analysis",
         "description": "Analyzing video content with AI",
         "progress_start": 0,
-        "progress_end": 12,
+        "progress_end": 10,
     },
     {
         "id": 2,
+        "name": "Analysis Approval",
+        "description": "Review and approve analysis",
+        "progress_start": 10,
+        "progress_end": 12,
+    },
+    {
+        "id": 3,
         "name": "AI Script Generation",
         "description": "Generating script with Ollama LLM",
         "progress_start": 12,
         "progress_end": 25,
     },
     {
-        "id": 3,
+        "id": 4,
         "name": "TTS Generation",
         "description": "Generating text-to-speech audio",
         "progress_start": 25,
         "progress_end": 35,
     },
     {
-        "id": 4,
+        "id": 5,
         "name": "Subtitle Generation",
         "description": "Creating subtitles with Whisper",
         "progress_start": 35,
         "progress_end": 55,
     },
     {
-        "id": 5,
+        "id": 6,
         "name": "Color Replacement",
         "description": "Adjusting subtitle colors",
         "progress_start": 55,
-        "progress_end": 62,
-    },
-    {
-        "id": 6,
-        "name": "Video Reformatting",
-        "description": "Converting to 9:16 format",
-        "progress_start": 62,
-        "progress_end": 80,
+        "progress_end": 67,
     },
     {
         "id": 7,
+        "name": "Video Reformatting",
+        "description": "Converting to 9:16 format",
+        "progress_start": 67,
+        "progress_end": 80,
+    },
+    {
+        "id": 8,
         "name": "Subtitle Burning",
         "description": "Burning subtitles into video",
         "progress_start": 80,
@@ -224,35 +236,75 @@ def process_pipeline():
         for step in PIPELINE_STEPS:
             emit_step_status(step["id"], "queued", "Waiting...")
 
-        # Step 1: analyze_cat_video.py
-        step = PIPELINE_STEPS[0]
-        # Delete existing output.txt to avoid any prompts
-        output_txt = PCC_DIR / "output.txt"
-        if output_txt.exists():
-            output_txt.unlink()
-            emit_log("🗑️ Removed existing output.txt")
-        
-        ok, log = run_cmd(
-            [
-                VENV_PYTHON,
-                str(SCRIPTS_DIR / "analyze_cat_video.py"),  # Absolute path
-                "--video",
-                UPLOAD_VIDEO_NAME,
-                "--out",
-                "output.txt",
-                "--fps",
-                "1.0",
-            ],
-            PCC_DIR,
-            step,
-        )
-        if not ok:
-            emit_log("❌ Pipeline failed at step 1")
-            socketio.emit("processing_error", {"message": "Video analysis failed"})
-            return
+        skip_analysis = (PCC_DIR / "skip_analysis.txt").exists()
 
-        # Step 2: ollama_generate_script.py
-        step = PIPELINE_STEPS[1]
+        if skip_analysis:
+            emit_log("⏭️ Skipping video analysis and analysis approval...")
+            step1 = PIPELINE_STEPS[0]
+            emit_step_status(step1["id"], "completed", f"{step1['name']} skipped")
+            emit_progress(step1["progress_end"])
+            
+            step2 = PIPELINE_STEPS[1]
+            emit_step_status(step2["id"], "completed", f"{step2['name']} skipped")
+            emit_progress(step2["progress_end"])
+            
+            output_txt = PCC_DIR / "output.txt"
+            if output_txt.exists():
+                output_txt.unlink()
+                emit_log("🗑️ Removed existing output.txt (Analysis Skipped)")
+        else:
+            # Step 1: analyze_cat_video.py
+            step = PIPELINE_STEPS[0]
+            # Delete existing output.txt to avoid any prompts
+            output_txt = PCC_DIR / "output.txt"
+            if output_txt.exists():
+                output_txt.unlink()
+                emit_log("🗑️ Removed existing output.txt")
+            
+            ok, log = run_cmd(
+                [
+                    VENV_PYTHON,
+                    str(SCRIPTS_DIR / "analyze_cat_video.py"),  # Absolute path
+                    "--video",
+                    UPLOAD_VIDEO_NAME,
+                    "--out",
+                    "output.txt",
+                    "--fps",
+                    "1.0",
+                ],
+                PCC_DIR,
+                step,
+            )
+            if not ok:
+                emit_log("❌ Pipeline failed at step 1")
+                socketio.emit("processing_error", {"message": "Video analysis failed"})
+                return
+
+            # ── HUMAN-IN-THE-LOOP: pause for analysis review ──
+            step = PIPELINE_STEPS[1]  # Analysis Approval step
+            emit_step_status(step["id"], "running", step["description"])
+            output_txt = PCC_DIR / "output.txt"
+            analysis_text = output_txt.read_text(encoding="utf-8", errors="ignore") if output_txt.exists() else ""
+
+            emit_log("✏️ Waiting for analysis review...")
+            socketio.emit("analysis_review", {"text": analysis_text})
+
+            # Block until user approves
+            analysis_review_gate.clear()
+            analysis_review_gate.wait()
+
+            approved_text = analysis_review_action["text"]
+            if approved_text.strip():
+                output_txt.write_text(approved_text, encoding="utf-8")
+                emit_log("✅ Analysis approved (with edits) — continuing pipeline")
+            else:
+                emit_log("✅ Analysis approved — continuing pipeline")
+
+            emit_step_status(step["id"], "completed", f"{step['name']} completed ✓")
+            emit_progress(step["progress_end"])
+
+        # Step 3: ollama_generate_script.py
+        step = PIPELINE_STEPS[2]
         ollama_cmd = [VENV_PYTHON, str(SCRIPTS_DIR / "ollama_generate_script.py")]
         topic_file = PCC_DIR / "video_topic.txt"
         if topic_file.exists():
@@ -445,7 +497,7 @@ def process_pipeline():
             emit_log(f"⚠ Title generation failed: {e}")
 
         # Step 3: kokoro_heart.py (skip if audio was already generated during review)
-        step = PIPELINE_STEPS[2]
+        step = PIPELINE_STEPS[3]
         if audio_generated_during_review:
             emit_log("⏭️ Skipping TTS — audio was already generated during review")
             emit_step_status(step["id"], "completed", f"{step['name']} completed ✓ (pre-generated)")
@@ -468,7 +520,7 @@ def process_pipeline():
                 return
 
         # Step 4: stable-ts
-        step = PIPELINE_STEPS[3]
+        step = PIPELINE_STEPS[4]
         # CRITICAL: Delete existing heart_all.srt to prevent user input prompt (y/n)
         heart_srt = PCC_DIR / "heart_all.srt"
         if heart_srt.exists():
@@ -504,7 +556,7 @@ def process_pipeline():
             return
 
         # Step 5: Color replacement (inline Python — no PowerShell needed)
-        step = PIPELINE_STEPS[4]
+        step = PIPELINE_STEPS[5]
         emit_step_status(step["id"], "running", step["description"])
         emit_log(f"▶ Running: Inline color replacement (#00ff00 → #ff00ffff)")
         try:
@@ -521,7 +573,7 @@ def process_pipeline():
             emit_progress(step["progress_end"])
 
         # Step 6: rearrange_9x16.py
-        step = PIPELINE_STEPS[5]
+        step = PIPELINE_STEPS[6]
         # Delete existing output video to avoid any prompts
         output_video = PCC_DIR / "output_9x16_letterbox.mp4"
         if output_video.exists():
@@ -549,7 +601,7 @@ def process_pipeline():
             return
 
         # Step 7: burn_hardsub_fit_ass.py
-        step = PIPELINE_STEPS[6]
+        step = PIPELINE_STEPS[7]
         burn_cmd = [
             VENV_PYTHON,  # Using venv Python
             str(SCRIPTS_DIR / "burn_hardsub_fit_ass.py"),  # Absolute path - CRITICAL FIX
@@ -572,7 +624,7 @@ def process_pipeline():
             step,
         )
         if not ok:
-            emit_log("❌ Pipeline failed at step 7")
+            emit_log("❌ Pipeline failed at step 8")
             socketio.emit("processing_error", {"message": "Subtitle burning failed"})
             return
 
@@ -687,6 +739,15 @@ def start_processing():
         elif am_path.exists():
             am_path.unlink()
 
+        # Handle skip analysis option
+        skip_analysis = request.form.get("skip_analysis", "").strip()
+        skip_path = PCC_DIR / "skip_analysis.txt"
+        if skip_analysis == "true":
+            skip_path.write_text("true", encoding="utf-8")
+            emit_log("⏭️ Skip video analysis enabled")
+        elif skip_path.exists():
+            skip_path.unlink()
+
         # Start processing in background thread
         thread = threading.Thread(target=process_pipeline)
         thread.daemon = True
@@ -799,6 +860,17 @@ def handle_script_review(data):
         "target_chars": data.get("target_chars", 0),
     }
     script_review_gate.set()
+
+
+@socketio.on("analysis_review_response")
+def handle_analysis_review(data):
+    """Handle user's analysis review decision: approve with optional edits."""
+    global analysis_review_action
+    analysis_review_action = {
+        "action": data.get("action", "approve"),
+        "text": data.get("text", ""),
+    }
+    analysis_review_gate.set()
 
 
 @socketio.on("update_title")
