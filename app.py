@@ -306,6 +306,11 @@ def process_pipeline():
         # Step 3: ollama_generate_script.py
         step = PIPELINE_STEPS[2]
         ollama_cmd = [VENV_PYTHON, str(SCRIPTS_DIR / "ollama_generate_script.py")]
+        
+        # Use contextual prompt if analysis was skipped
+        if skip_analysis:
+            ollama_cmd += ["--sys-prompt", "system_prompt_context.txt"]
+            
         topic_file = PCC_DIR / "video_topic.txt"
         if topic_file.exists():
             ollama_cmd += ["--topic", str(topic_file)]
@@ -395,6 +400,10 @@ def process_pipeline():
                 input_txt_path.write_text(new_text, encoding="utf-8")
                 emit_log("➕ Extending script by ~50% (re-running Ollama)...")
                 extend_cmd = [VENV_PYTHON, str(SCRIPTS_DIR / "ollama_generate_script.py"), "--extend"]
+                
+                if skip_analysis:
+                    extend_cmd += ["--sys-prompt", "system_prompt_context.txt"]
+                
                 if topic_file.exists():
                     extend_cmd += ["--topic", str(topic_file)]
                 target_chars = script_review_action.get("target_chars", 0)
@@ -424,6 +433,10 @@ def process_pipeline():
                 input_txt_path.write_text(new_text, encoding="utf-8")
                 emit_log("➖ Reducing script by ~50% (re-running Ollama)...")
                 reduce_cmd = [VENV_PYTHON, str(SCRIPTS_DIR / "ollama_generate_script.py"), "--reduce"]
+                
+                if skip_analysis:
+                    reduce_cmd += ["--sys-prompt", "system_prompt_context.txt"]
+                
                 if topic_file.exists():
                     reduce_cmd += ["--topic", str(topic_file)]
                 target_chars = script_review_action.get("target_chars", 0)
@@ -451,6 +464,10 @@ def process_pipeline():
 
                 emit_log("🔄 Regenerating script (re-running Ollama)...")
                 regen_cmd = [VENV_PYTHON, str(SCRIPTS_DIR / "ollama_generate_script.py")]
+                
+                if skip_analysis:
+                    regen_cmd += ["--sys-prompt", "system_prompt_context.txt"]
+                
                 if topic_file.exists():
                     regen_cmd += ["--topic", str(topic_file)]
                 target_chars = script_review_action.get("target_chars", 0)

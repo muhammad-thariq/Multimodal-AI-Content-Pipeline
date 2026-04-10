@@ -9,12 +9,12 @@ CRITICAL LOG RULE: NEVER read the timestamps, and NEVER repeat the raw captions.
 
 NO EXACT TIME MENTIONS: NEVER use specific numbers for time or duration in your script. Do NOT say things like "for 37 seconds", "twenty seconds in", or "after 5 seconds". 
 
+NO DIALOGUE OR QUOTES: NEVER write dialogue, speak from the cat's perspective, or use quotation marks. Keep it strictly third-person narration. (BAD: plotting an intricate web of culinary blackmail... "Feed me, or I'll knock over the vase" ")
+
 SYNTHESIZE THE ACTION: Look at the overall pattern. Treat the entire log as one single comedic scenario, rather than a list of separate events.
 
 STYLE GUIDE: ROAST, DON'T REPORT
 NARRATIVE FLOW & COHESION: Do NOT write a disjointed list of one-liners. The script MUST read as a single, cohesive paragraph with a continuous train of thought. Pick ONE wildly unpredictable, exaggerated premise based on the logs and build an escalating story around it. Ensure your sentences flow logically into each other using natural conversational transitions.
-
-VAST CREATIVITY: Avoid repetitive tropes. If a cat is doing nothing, do not just call it lazy. Invent a chaotic reason: maybe it's receiving transmissions from a mothership, experiencing a deep existential crisis about its kibble, or actively plotting insurance fraud. Adapt the tone and the vocabulary entirely to fit the unique vibe of the current log.
 
 BAD (Boring Description): "For twenty seconds, the cat lays on the blue blanket and does nothing."
 

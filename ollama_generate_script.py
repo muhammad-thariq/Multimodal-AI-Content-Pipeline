@@ -17,7 +17,7 @@ if sys.platform == "win32":
 # Configuration
 OLLAMA_URL = "http://127.0.0.1:11434/api/generate"
 MODEL_NAME = "llama3.1:latest"
-SYSTEM_PROMPT_FILE = "system_prompt.txt"
+DEFAULT_SYSTEM_PROMPT_FILE = "system_prompt.txt"
 INPUT_FILE = "output.txt"
 OUTPUT_FILE = "input.txt"
 
@@ -86,6 +86,8 @@ def main():
                         help="Reduce the existing script in input.txt by ~50%%")
     parser.add_argument("--target-chars", type=int, default=0,
                         help="Target character count for the generated script")
+    parser.add_argument("--sys-prompt", type=str, default=DEFAULT_SYSTEM_PROMPT_FILE,
+                        help="Override the system prompt file (default: system_prompt.txt)")
     args = parser.parse_args()
 
     try:
@@ -94,8 +96,8 @@ def main():
         print("=" * 60)
         
         # Read system prompt
-        print(f"[*] Reading system prompt from {SYSTEM_PROMPT_FILE}...")
-        system_prompt = read_file(SYSTEM_PROMPT_FILE)
+        print(f"[*] Reading system prompt from {args.sys_prompt}...")
+        system_prompt = read_file(args.sys_prompt)
         print(f"[OK] System prompt loaded ({len(system_prompt)} characters)")
         
         # Read video analysis output
